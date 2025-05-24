@@ -1,32 +1,38 @@
 <script>
-    let activeTab = 'lidos';
+    import { createEventDispatcher } from 'svelte';
+    import { BOOK_STATUS, BOOK_STATUS_LABELS } from '$lib/constants/bookStatus';
+    
+    const dispatch = createEventDispatcher();
+
+    let activeTab = BOOK_STATUS.READ;
 
     function setActiveTab(tab) {
         activeTab = tab;
+        dispatch('statusChange', tab);
     }
 </script>
 
 <div class="tabs">
     <button 
         class="tab" 
-        class:active={activeTab === 'lidos'} 
-        on:click={() => setActiveTab('lidos')}
+        class:active={activeTab === BOOK_STATUS.READ} 
+        on:click={() => setActiveTab(BOOK_STATUS.READ)}
     >
-        Lidos
+        {BOOK_STATUS_LABELS[BOOK_STATUS.READ]}
     </button>
     <button 
         class="tab" 
-        class:active={activeTab === 'lendo'} 
-        on:click={() => setActiveTab('lendo')}
+        class:active={activeTab === BOOK_STATUS.READING} 
+        on:click={() => setActiveTab(BOOK_STATUS.READING)}
     >
-        Lendo
+        {BOOK_STATUS_LABELS[BOOK_STATUS.READING]}
     </button>
     <button 
         class="tab" 
-        class:active={activeTab === 'nao-lidos'} 
-        on:click={() => setActiveTab('nao-lidos')}
+        class:active={activeTab === BOOK_STATUS.UNREAD} 
+        on:click={() => setActiveTab(BOOK_STATUS.UNREAD)}
     >
-        Não lidos
+        {BOOK_STATUS_LABELS[BOOK_STATUS.UNREAD]}
     </button>
 </div>
 

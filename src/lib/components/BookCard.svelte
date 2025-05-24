@@ -1,13 +1,13 @@
 <script>
-    export let title;
+    export let name;
     export let author;
-    export let cover;
+    export let imgsrc;
 </script>
 
 <div class="book-card">
-    <img src={cover} alt={title} class="book-cover">
+    <img src={imgsrc} alt={name} class="book-cover">
     <div class="book-info">
-        <h3 class="book-title">{title}</h3>
+        <h3 class="book-title">{name}</h3>
         <p class="book-author">{author}</p>
     </div>
 </div>
