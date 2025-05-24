@@ -3,13 +3,15 @@
     import Navigation from '$lib/components/Navigation.svelte';
     import FilterBar from '$lib/components/FilterBar.svelte';
     import BookGrid from '$lib/components/BookGrid.svelte';
-    import { books as allBooks } from '$lib/data/books';
 
-    let filteredBooks = allBooks;
+    /** @type {import('./$types').PageData} */
+    export let data;
+
+    let filteredBooks = data.books;
 
     function handleSearch(event) {
         const searchTerm = event.detail.toLowerCase();
-        filteredBooks = allBooks.filter(book => 
+        filteredBooks = data.books.filter(book => 
             book.title.toLowerCase().includes(searchTerm) ||
             book.author.toLowerCase().includes(searchTerm)
         );
