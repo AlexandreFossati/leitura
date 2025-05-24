@@ -3,7 +3,10 @@
     import Navigation from '$lib/components/Navigation.svelte';
     import FilterBar from '$lib/components/FilterBar.svelte';
     import BookGrid from '$lib/components/BookGrid.svelte';
+    import FloatingButton from '$lib/components/FloatingButton.svelte';
+    import BookDialog from '$lib/components/BookDialog.svelte';
     import { BOOK_STATUS } from '$lib/constants/bookStatus';
+    import { dialogVisible, showDialog, hideDialog } from '$lib/stores/dialog';
 
     /** @type {import('./$types').PageData} */
     export let data;
@@ -34,6 +37,33 @@
     function handleSort() {
         filteredBooks = [...filteredBooks].sort(() => Math.random() - 0.5);
     }
+
+    async function handleBookSubmit(event) {
+        try {
+            const response = await fetch('/api/books', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(event.detail)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || 'Erro ao criar livro');
+            }
+
+            const newBook = await response.json();
+            data.books = [...data.books, newBook];
+            filteredBooks = filterBooks(data.books, currentStatus, '');
+
+            // Aqui você poderia adicionar uma notificação de sucesso
+            alert('Livro criado com sucesso!');
+        } catch (error) {
+            console.error('Erro ao salvar livro:', error);
+            alert('Erro ao criar livro: ' + error.message);
+        }
+    }
 </script>
 
 <Header />
@@ -42,6 +72,12 @@
     <Navigation on:statusChange={handleStatusChange}/>
     <FilterBar on:search={handleSearch} on:sort={handleSort} />
     <BookGrid books={filteredBooks} />
+    <FloatingButton on:click={showDialog} />
+    <BookDialog 
+        show={$dialogVisible} 
+        on:close={hideDialog}
+        on:submit={handleBookSubmit}
+    />
 </main>
 
 <style>
