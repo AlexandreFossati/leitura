@@ -5,7 +5,7 @@
 
 <div class="books-grid">
     {#each books as book}
-        <BookCard {...book} />
+        <BookCard {book} />
     {/each}
 </div>
 
