@@ -73,4 +73,41 @@ export async function createBook({ name, author, imgsrc }) {
         console.error('Erro ao criar livro:', err);
         throw new Error('Falha ao criar livro no banco de dados');
     }
+}
+
+/**
+ * Atualiza o status de um livro
+ * @param {number} id - ID do livro
+ * @param {string} status - Novo status do livro
+ * @returns {Promise<{
+ *   id: number,
+ *   name: string,
+ *   author: string,
+ *   imgsrc: string,
+ *   status: string,
+ *   rating: number
+ * }>}
+ */
+export async function updateBookStatus(id, status) {
+    try {
+        const query_text = `
+            UPDATE books 
+            SET status = $1,
+                last_modified_at = NOW(),
+                last_modified_by = 1
+            WHERE id = $2
+            RETURNING id, name, author, imgsrc, status, rating
+        `;
+        
+        const result = await query(query_text, [status, id]);
+
+        if (result.rows.length === 0) {
+            throw new Error('Livro não encontrado');
+        }
+
+        return result.rows[0];
+    } catch (err) {
+        console.error('Erro ao atualizar status do livro:', err);
+        throw new Error('Falha ao atualizar status do livro no banco de dados');
+    }
 } 

@@ -5,6 +5,7 @@
     import BookGrid from '$lib/components/BookGrid.svelte';
     import FloatingButton from '$lib/components/FloatingButton.svelte';
     import BookDialog from '$lib/components/BookDialog.svelte';
+    import BookRaffle from '$lib/components/BookRaffle.svelte';
     import { BOOK_STATUS } from '$lib/constants/bookStatus';
     import { dialogVisible, showDialog, hideDialog } from '$lib/stores/dialog';
 
@@ -13,6 +14,7 @@
 
     let currentStatus = BOOK_STATUS.READ;
     let filteredBooks = filterBooks(data.books, currentStatus, '');
+    let showRaffle = false;
 
     function filterBooks(books, status, searchTerm) {
         return books
@@ -35,7 +37,19 @@
     }
 
     function handleSort() {
-        filteredBooks = [...filteredBooks].sort(() => Math.random() - 0.5);
+        showRaffle = true;
+    }
+
+    function handleRaffleClose(event) {
+        showRaffle = false;
+        const { selectedBook } = event.detail;
+        if (selectedBook) {
+            // Atualiza a lista de livros local
+            data.books = data.books.map(book => 
+                book.id === selectedBook.id ? selectedBook : book
+            );
+            filteredBooks = filterBooks(data.books, currentStatus, '');
+        }
     }
 
     async function handleBookSubmit(event) {
@@ -78,6 +92,12 @@
         on:close={hideDialog}
         on:submit={handleBookSubmit}
     />
+    {#if showRaffle}
+        <BookRaffle
+            books={data.books}
+            on:close={handleRaffleClose}
+        />
+    {/if}
 </main>
 
 <style>
