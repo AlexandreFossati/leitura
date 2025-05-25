@@ -1,14 +1,43 @@
 <script>
     import { BOOK_STATUS } from '$lib/constants/bookStatus';
     import StarRating from './StarRating.svelte';
+    import BookActions from './BookActions.svelte';
+    import { activeMenu } from '$lib/stores/menuStore';
 
     /** @type {import('$lib/types').Book} */
     export let book;
 
     $: isRead = book.status === BOOK_STATUS.READ;
+    $: isUnread = book.status === BOOK_STATUS.UNREAD;
+
+    let actionsPosition = { x: 0, y: 0 };
+
+    // Subscreve ao store para saber se este card tem o menu ativo
+    $: showActions = $activeMenu === book.id;
+
+    function handleClick(event) {
+        if (!isUnread) return;
+
+        if (showActions) {
+            // Se o menu já está aberto neste card, fecha
+            activeMenu.set(null);
+        } else {
+            // Se o menu está fechado ou aberto em outro card, abre neste
+            // Há um controle global para fechar o menu quando clicar fora de um card ou menu de ações na +page.svelte
+            actionsPosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+            activeMenu.set(book.id);
+        }
+    }
 </script>
 
-<div class="book-card">
+<div 
+    class="book-card"
+    class:clickable={isUnread}
+    on:click={handleClick}
+>
     <img src={book.imgsrc} alt={book.name} class="book-image">
     <div class="book-info">
         <h3 class="book-title">{book.name}</h3>
@@ -20,6 +49,16 @@
         {/if}
     </div>
 </div>
+
+{#if showActions}
+    <BookActions
+        {book}
+        position={actionsPosition}
+        on:edit={() => activeMenu.set(null)}
+        on:delete={() => activeMenu.set(null)}
+        on:moveToReading={() => activeMenu.set(null)}
+    />
+{/if}
 
 <style>
     .book-card {
@@ -33,7 +72,11 @@
         flex-direction: column;
     }
 
-    .book-card:hover {
+    .book-card.clickable {
+        cursor: pointer;
+    }
+
+    .book-card.clickable:hover {
         transform: translateY(-4px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }

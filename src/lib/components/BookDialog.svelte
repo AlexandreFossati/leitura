@@ -1,18 +1,44 @@
 <script>
     import { createEventDispatcher } from 'svelte';
-    const dispatch = createEventDispatcher();
+    import { fade } from 'svelte/transition';
 
+    /** @type {import('$lib/types').Book | null} */
+    export let book = null;
     export let show = false;
 
-    let name = '';
-    let author = '';
-    let imgsrc = '';
+    // Se book for fornecido, estamos em modo de edição
+    $: isEditing = !!book;
+
+    // Inicializa os campos com valores do livro se estiver editando
+    let name = book?.name ?? '';
+    let author = book?.author ?? '';
+    let imgsrc = book?.imgsrc ?? '';
     let loading = false;
     let errors = {
         name: '',
         author: '',
         imgsrc: ''
     };
+
+    // Reseta os campos quando o dialog é fechado
+    $: if (!show) {
+        if (!isEditing) {
+            name = '';
+            author = '';
+            imgsrc = '';
+        } else {
+            name = book?.name ?? '';
+            author = book?.author ?? '';
+            imgsrc = book?.imgsrc ?? '';
+        }
+        errors = {
+            name: '',
+            author: '',
+            imgsrc: ''
+        };
+    }
+
+    const dispatch = createEventDispatcher();
 
     function validateForm() {
         let isValid = true;
@@ -53,19 +79,7 @@
     }
 
     function handleClose() {
-        resetForm();
         dispatch('close');
-    }
-
-    function resetForm() {
-        name = '';
-        author = '';
-        imgsrc = '';
-        errors = {
-            name: '',
-            author: '',
-            imgsrc: ''
-        };
     }
 
     async function handleSubmit() {
@@ -73,8 +87,12 @@
 
         loading = true;
         try {
-            dispatch('submit', { name, author, imgsrc });
-            handleClose();
+            const data = { name, author, imgsrc };
+            if (isEditing) {
+                dispatch('submit', { id: book.id, ...data });
+            } else {
+                dispatch('submit', data);
+            }
         } catch (error) {
             console.error('Erro ao salvar livro:', error);
         } finally {
@@ -84,16 +102,16 @@
 </script>
 
 {#if show}
-    <div class="dialog-overlay" on:click={handleClose}>
+    <div class="dialog-overlay" on:click={handleClose} transition:fade>
         <div class="dialog" on:click|stopPropagation>
             <div class="dialog-header">
-                <h2>Novo Livro</h2>
+                <h2>{isEditing ? 'Editar' : 'Novo'} Livro</h2>
                 <button class="close-button" on:click={handleClose}>×</button>
             </div>
 
             <div class="dialog-content">
                 <div class="form-group">
-                    <label for="name">Name</label>
+                    <label for="name">Nome</label>
                     <input
                         type="text"
                         id="name"
@@ -107,7 +125,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="author">Author</label>
+                    <label for="author">Autor</label>
                     <input
                         type="text"
                         id="author"
@@ -121,7 +139,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="imgsrc">Image link</label>
+                    <label for="imgsrc">Link da imagem</label>
                     <input
                         type="text"
                         id="imgsrc"

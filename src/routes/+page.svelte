@@ -8,6 +8,8 @@
     import BookRaffle from '$lib/components/BookRaffle.svelte';
     import { BOOK_STATUS } from '$lib/constants/bookStatus';
     import { dialogVisible, showDialog, hideDialog } from '$lib/stores/dialog';
+    import { onMount } from 'svelte';
+    import { activeMenu } from '$lib/stores/menuStore';
 
     /** @type {import('./$types').PageData} */
     export let data;
@@ -78,6 +80,21 @@
             alert('Erro ao criar livro: ' + error.message);
         }
     }
+
+    onMount(() => {
+        function handleGlobalClick(event) {
+            // Fecha o menu se clicar fora de um card ou menu de ações
+            if (!event.target.closest('.book-card') && !event.target.closest('.actions-menu')) {
+                activeMenu.set(null);
+            }
+        }
+
+        document.addEventListener('click', handleGlobalClick);
+
+        return () => {
+            document.removeEventListener('click', handleGlobalClick);
+        };
+    });
 </script>
 
 <Header />
