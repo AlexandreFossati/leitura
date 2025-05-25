@@ -3,27 +3,32 @@
     import StarRating from './StarRating.svelte';
     import BookActions from './BookActions.svelte';
     import { activeMenu } from '$lib/stores/menuStore';
+    import { fade } from 'svelte/transition';
+    import { createEventDispatcher } from 'svelte';
 
     /** @type {import('$lib/types').Book} */
     export let book;
 
+    const dispatch = createEventDispatcher();
+    
     $: isRead = book.status === BOOK_STATUS.READ;
     $: isUnread = book.status === BOOK_STATUS.UNREAD;
 
     let actionsPosition = { x: 0, y: 0 };
+    let isLoading = false;
+    let error = null;
 
     // Subscreve ao store para saber se este card tem o menu ativo
     $: showActions = $activeMenu === book.id;
 
     function handleClick(event) {
-        if (!isUnread) return;
+        if (!isUnread || isLoading) return;
 
         if (showActions) {
             // Se o menu já está aberto neste card, fecha
             activeMenu.set(null);
         } else {
             // Se o menu está fechado ou aberto em outro card, abre neste
-            // Há um controle global para fechar o menu quando clicar fora de um card ou menu de ações na +page.svelte
             actionsPosition = {
                 x: event.clientX,
                 y: event.clientY
@@ -31,12 +36,60 @@
             activeMenu.set(book.id);
         }
     }
+
+    async function handleMoveToReading() {
+        if (isLoading) return;
+
+        isLoading = true;
+        error = null;
+
+        try {
+            book.status = BOOK_STATUS.READING;
+            activeMenu.set(null);
+
+            const response = await fetch(`/api/books/${book.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    ...book,
+                    status: BOOK_STATUS.READING 
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Falha ao mover livro para "Lendo"');
+            }
+
+            // Notifica o componente pai sobre a mudança
+            dispatch('statusChange', { 
+                bookId: book.id, 
+                newStatus: BOOK_STATUS.READING 
+            });
+
+            // Mostra notificação de sucesso
+            showNotification('Livro movido para "Lendo" com sucesso!');
+        } catch (e) {
+            // Reverte a atualização otimista em caso de erro
+            book.status = BOOK_STATUS.UNREAD;
+            error = e.message;
+            showNotification(error, 'error');
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    function showNotification(message, type = 'success') {
+        // Dispara evento para mostrar notificação
+        dispatch('notification', { message, type });
+    }
 </script>
 
 <div 
     class="book-card"
-    class:clickable={isUnread}
+    class:clickable={isUnread && !isLoading}
+    class:loading={isLoading}
     on:click={handleClick}
+    transition:fade
 >
     <img src={book.imgsrc} alt={book.name} class="book-image">
     <div class="book-info">
@@ -47,16 +100,22 @@
                 <StarRating rating={book.rating} />
             </div>
         {/if}
+        {#if isLoading}
+            <div class="loading-overlay">
+                <div class="loading-spinner"></div>
+                <span>Movendo...</span>
+            </div>
+        {/if}
     </div>
 </div>
 
-{#if showActions}
+{#if showActions && !isLoading}
     <BookActions
         {book}
         position={actionsPosition}
         on:edit={() => activeMenu.set(null)}
         on:delete={() => activeMenu.set(null)}
-        on:moveToReading={() => activeMenu.set(null)}
+        on:moveToReading={handleMoveToReading}
     />
 {/if}
 
@@ -66,10 +125,11 @@
         border-radius: 8px;
         overflow: hidden;
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
         height: 100%;
         display: flex;
         flex-direction: column;
+        position: relative;
     }
 
     .book-card.clickable {
@@ -79,6 +139,11 @@
     .book-card.clickable:hover {
         transform: translateY(-4px);
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .book-card.loading {
+        opacity: 0.7;
+        cursor: not-allowed;
     }
 
     .book-image {
@@ -92,6 +157,7 @@
         flex: 1;
         display: flex;
         flex-direction: column;
+        position: relative;
     }
 
     .book-title {
@@ -111,5 +177,33 @@
     .rating-container {
         margin-top: auto;
         padding-top: 0.5rem;
+    }
+
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.9);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .loading-spinner {
+        width: 24px;
+        height: 24px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid rgb(0, 209, 178);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 </style> 

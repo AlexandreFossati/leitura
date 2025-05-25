@@ -6,6 +6,7 @@
     import FloatingButton from '$lib/components/FloatingButton.svelte';
     import BookDialog from '$lib/components/BookDialog.svelte';
     import BookRaffle from '$lib/components/BookRaffle.svelte';
+    import Notification from '$lib/components/Notification.svelte';
     import { BOOK_STATUS } from '$lib/constants/bookStatus';
     import { dialogVisible, showDialog, hideDialog } from '$lib/stores/dialog';
     import { onMount } from 'svelte';
@@ -17,6 +18,7 @@
     let currentStatus = BOOK_STATUS.READ;
     let filteredBooks = filterBooks(data.books, currentStatus, '');
     let showRaffle = false;
+    let notification = null;
 
     function filterBooks(books, status, searchTerm) {
         return books
@@ -54,6 +56,26 @@
         }
     }
 
+    function handleBookStatusChange(event) {
+        const { bookId, newStatus } = event.detail;
+        // Atualiza a lista de livros local
+        data.books = data.books.map(book => 
+            book.id === bookId 
+                ? { ...book, status: newStatus }
+                : book
+        );
+        // Atualiza a lista filtrada
+        filteredBooks = filterBooks(data.books, currentStatus, '');
+    }
+
+    function showNotification(message, type = 'success') {
+        notification = { message, type };
+        // Remove a notificação após ela desaparecer
+        setTimeout(() => {
+            notification = null;
+        }, 3500); // 3.5s (3s da notificação + 0.5s da animação)
+    }
+
     async function handleBookSubmit(event) {
         try {
             const response = await fetch('/api/books', {
@@ -72,12 +94,11 @@
             const newBook = await response.json();
             data.books = [...data.books, newBook];
             filteredBooks = filterBooks(data.books, currentStatus, '');
-
-            // Aqui você poderia adicionar uma notificação de sucesso
-            alert('Livro criado com sucesso!');
+            hideDialog();
+            showNotification('Livro criado com sucesso!');
         } catch (error) {
             console.error('Erro ao salvar livro:', error);
-            alert('Erro ao criar livro: ' + error.message);
+            showNotification(error.message, 'error');
         }
     }
 
@@ -102,7 +123,11 @@
 <main class="container">
     <Navigation on:statusChange={handleStatusChange}/>
     <FilterBar on:search={handleSearch} on:sort={handleSort} />
-    <BookGrid books={filteredBooks} />
+    <BookGrid 
+        books={filteredBooks}
+        on:notification={e => showNotification(e.detail.message, e.detail.type)}
+        on:statusChange={handleBookStatusChange}
+    />
     <FloatingButton on:click={showDialog} />
     <BookDialog 
         show={$dialogVisible} 
@@ -113,6 +138,12 @@
         <BookRaffle
             books={data.books}
             on:close={handleRaffleClose}
+        />
+    {/if}
+    {#if notification}
+        <Notification 
+            message={notification.message}
+            type={notification.type}
         />
     {/if}
 </main>
