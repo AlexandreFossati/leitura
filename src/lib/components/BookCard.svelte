@@ -2,10 +2,12 @@
     import { BOOK_STATUS } from '$lib/constants/bookStatus';
     import StarRating from './StarRating.svelte';
     import BookActions from './BookActions.svelte';
+    import ConfirmDialog from './ConfirmDialog.svelte';
+    import RatingDialog from './RatingDialog.svelte';
     import { activeMenu } from '$lib/stores/menuStore';
     import { fade } from 'svelte/transition';
     import { createEventDispatcher } from 'svelte';
-    import ConfirmDialog from './ConfirmDialog.svelte';
+    import { handleMoveToReading, handleMoveToRead, handleUpdateRating } from '$lib/actions/bookCardActions';
 
     /** @type {import('$lib/types').Book} */
     export let book;
@@ -20,6 +22,7 @@
     let isLoading = false;
     let error = null;
     let showConfirmDialog = false;
+    let showRatingDialog = false;
 
     // Subscreve ao store para saber se este card tem o menu ativo
     $: showActions = $activeMenu === book.id;
@@ -41,104 +44,53 @@
             }
         } else if (isReading) {
             showConfirmDialog = true;
+        } else if (isRead) {
+            showRatingDialog = true;
         }
     }
 
-    async function handleMoveToReading() {
-        if (isLoading) return;
-
+    async function handleMoveToReadingClick() {
         isLoading = true;
-        error = null;
-
-        try {
+        const result = await handleMoveToReading(book, dispatch);
+        if (result.success) {
             book.status = BOOK_STATUS.READING;
-            activeMenu.set(null);
-
-            const response = await fetch(`/api/books/${book.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    ...book,
-                    status: BOOK_STATUS.READING 
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Falha ao mover livro para "Lendo"');
-            }
-
-            // Notifica o componente pai sobre a mudança
-            dispatch('statusChange', { 
-                bookId: book.id, 
-                newStatus: BOOK_STATUS.READING 
-            });
-
-            // Mostra notificação de sucesso
-            showNotification('Livro movido para "Lendo" com sucesso!');
-        } catch (e) {
-            // Reverte a atualização otimista em caso de erro
-            book.status = BOOK_STATUS.UNREAD;
-            error = e.message;
-            showNotification(error, 'error');
-        } finally {
-            isLoading = false;
         }
+        isLoading = false;
     }
 
-    async function handleMoveToRead() {
-        if (isLoading) return;
-
+    async function handleMoveToReadClick() {
         isLoading = true;
-        error = null;
         showConfirmDialog = false;
-
-        try {
+        const result = await handleMoveToRead(book, dispatch);
+        if (result.success) {
             book.status = BOOK_STATUS.READ;
-
-            const response = await fetch(`/api/books/${book.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    ...book,
-                    status: BOOK_STATUS.READ 
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Falha ao mover livro para "Lidos"');
-            }
-
-            // Notifica o componente pai sobre a mudança
-            dispatch('statusChange', { 
-                bookId: book.id, 
-                newStatus: BOOK_STATUS.READ 
-            });
-
-            // Mostra notificação de sucesso
-            showNotification('Livro movido para "Lidos" com sucesso!');
-        } catch (e) {
-            // Reverte a atualização otimista em caso de erro
-            book.status = BOOK_STATUS.READING;
-            error = e.message;
-            showNotification(error, 'error');
-        } finally {
-            isLoading = false;
         }
+        isLoading = false;
+    }
+
+    async function handleRatingConfirm(event) {
+        const newRating = event.detail;
+        isLoading = true;
+        showRatingDialog = false;
+        const result = await handleUpdateRating(book, newRating, dispatch);
+        if (result.success) {
+            book.rating = newRating;
+        }
+        isLoading = false;
     }
 
     function handleConfirmDialogClose() {
         showConfirmDialog = false;
     }
 
-    function showNotification(message, type = 'success') {
-        // Dispara evento para mostrar notificação
-        dispatch('notification', { message, type });
+    function handleRatingDialogClose() {
+        showRatingDialog = false;
     }
 </script>
 
 <div 
     class="book-card"
-    class:clickable={(isUnread || isReading) && !isLoading}
+    class:clickable={(isUnread || isReading || isRead) && !isLoading}
     class:loading={isLoading}
     on:click={handleClick}
     transition:fade={{ duration: 200 }}
@@ -149,7 +101,7 @@
         <p class="book-author">{book.author}</p>
         {#if isRead}
             <div class="rating-container">
-                <StarRating rating={book.rating} />
+                <StarRating rating={book.rating} readonly={true} />
             </div>
         {/if}
         {#if isLoading}
@@ -167,7 +119,7 @@
         position={actionsPosition}
         on:edit={() => activeMenu.set(null)}
         on:delete={() => activeMenu.set(null)}
-        on:moveToReading={handleMoveToReading}
+        on:moveToReading={handleMoveToReadingClick}
     />
 {/if}
 
@@ -178,8 +130,18 @@
         message="Deseja marcar este livro como lido?"
         confirmText="Concluir leitura"
         cancelText="Cancelar"
-        on:confirm={handleMoveToRead}
+        on:confirm={handleMoveToReadClick}
         on:cancel={handleConfirmDialogClose}
+    />
+{/if}
+
+{#if showRatingDialog}
+    <RatingDialog
+        show={true}
+        bookTitle={book.name}
+        currentRating={book.rating}
+        on:confirm={handleRatingConfirm}
+        on:cancel={handleRatingDialogClose}
     />
 {/if}
 

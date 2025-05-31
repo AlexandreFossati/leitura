@@ -55,8 +55,19 @@ export async function PATCH({ params, request }) {
             return json({ error: 'ID do livro inválido' }, { status: 400 });
         }
 
+        // Validação do rating, se presente
+        if (data.rating !== undefined) {
+            const rating = parseInt(data.rating);
+            if (isNaN(rating) || rating < 0 || rating > 10) {
+                return json({ 
+                    error: 'Rating deve ser um número entre 0 e 10' 
+                }, { status: 400 });
+            }
+            data.rating = rating;
+        }
+
         // Validação dos campos permitidos
-        const allowedFields = ['name', 'author', 'imgsrc'];
+        const allowedFields = ['name', 'author', 'imgsrc', 'rating'];
         const updates = {};
         
         Object.entries(data).forEach(([key, value]) => {
