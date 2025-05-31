@@ -5,6 +5,7 @@
     import { activeMenu } from '$lib/stores/menuStore';
     import { fade } from 'svelte/transition';
     import { createEventDispatcher } from 'svelte';
+    import ConfirmDialog from './ConfirmDialog.svelte';
 
     /** @type {import('$lib/types').Book} */
     export let book;
@@ -13,27 +14,33 @@
     
     $: isRead = book.status === BOOK_STATUS.READ;
     $: isUnread = book.status === BOOK_STATUS.UNREAD;
+    $: isReading = book.status === BOOK_STATUS.READING;
 
     let actionsPosition = { x: 0, y: 0 };
     let isLoading = false;
     let error = null;
+    let showConfirmDialog = false;
 
     // Subscreve ao store para saber se este card tem o menu ativo
     $: showActions = $activeMenu === book.id;
 
     function handleClick(event) {
-        if (!isUnread || isLoading) return;
+        if (isLoading) return;
 
-        if (showActions) {
-            // Se o menu já está aberto neste card, fecha
-            activeMenu.set(null);
-        } else {
-            // Se o menu está fechado ou aberto em outro card, abre neste
-            actionsPosition = {
-                x: event.clientX,
-                y: event.clientY
-            };
-            activeMenu.set(book.id);
+        if (isUnread) {
+            if (showActions) {
+                // Se o menu já está aberto neste card, fecha
+                activeMenu.set(null);
+            } else {
+                // Se o menu está fechado ou aberto em outro card, abre neste
+                actionsPosition = {
+                    x: event.clientX,
+                    y: event.clientY
+                };
+                activeMenu.set(book.id);
+            }
+        } else if (isReading) {
+            showConfirmDialog = true;
         }
     }
 
@@ -78,6 +85,51 @@
         }
     }
 
+    async function handleMoveToRead() {
+        if (isLoading) return;
+
+        isLoading = true;
+        error = null;
+        showConfirmDialog = false;
+
+        try {
+            book.status = BOOK_STATUS.READ;
+
+            const response = await fetch(`/api/books/${book.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    ...book,
+                    status: BOOK_STATUS.READ 
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Falha ao mover livro para "Lidos"');
+            }
+
+            // Notifica o componente pai sobre a mudança
+            dispatch('statusChange', { 
+                bookId: book.id, 
+                newStatus: BOOK_STATUS.READ 
+            });
+
+            // Mostra notificação de sucesso
+            showNotification('Livro movido para "Lidos" com sucesso!');
+        } catch (e) {
+            // Reverte a atualização otimista em caso de erro
+            book.status = BOOK_STATUS.READING;
+            error = e.message;
+            showNotification(error, 'error');
+        } finally {
+            isLoading = false;
+        }
+    }
+
+    function handleConfirmDialogClose() {
+        showConfirmDialog = false;
+    }
+
     function showNotification(message, type = 'success') {
         // Dispara evento para mostrar notificação
         dispatch('notification', { message, type });
@@ -86,10 +138,10 @@
 
 <div 
     class="book-card"
-    class:clickable={isUnread && !isLoading}
+    class:clickable={(isUnread || isReading) && !isLoading}
     class:loading={isLoading}
     on:click={handleClick}
-    transition:fade
+    transition:fade={{ duration: 200 }}
 >
     <img src={book.imgsrc} alt={book.name} class="book-image">
     <div class="book-info">
@@ -116,6 +168,18 @@
         on:edit={() => activeMenu.set(null)}
         on:delete={() => activeMenu.set(null)}
         on:moveToReading={handleMoveToReading}
+    />
+{/if}
+
+{#if showConfirmDialog}
+    <ConfirmDialog
+        show={true}
+        title="Finalizar Livro"
+        message="Deseja marcar este livro como lido?"
+        confirmText="Concluir leitura"
+        cancelText="Cancelar"
+        on:confirm={handleMoveToRead}
+        on:cancel={handleConfirmDialogClose}
     />
 {/if}
 
