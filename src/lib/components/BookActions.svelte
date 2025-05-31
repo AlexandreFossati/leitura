@@ -41,13 +41,13 @@
         }
     });
 
-    function handleEdit() {
-        dispatch('edit', book);
-    }
+    // function handleEdit() {
+    //     dispatch('edit', book);
+    // }
 
-    function handleDelete() {
-        dispatch('delete', book);
-    }
+    // function handleDelete() {
+    //     dispatch('delete', book);
+    // }
 
     function handleMoveToReading() {
         dispatch('moveToReading', book);
@@ -60,18 +60,18 @@
     style="left: {adjustedPosition.x}px; top: {adjustedPosition.y}px;"
     transition:fade={{ duration: 150 }}
 >
-    <button class="action-button" on:click={handleEdit}>
+    <!-- <button class="action-button" on:click={handleEdit}>
         <span class="icon">✏️</span>
         Editar
-    </button>
+    </button> -->
     <button class="action-button" on:click={handleMoveToReading}>
         <span class="icon">📖</span>
         Mover para "Lendo"
     </button>
-    <button class="action-button delete" on:click={handleDelete}>
+    <!-- <button class="action-button delete" on:click={handleDelete}>
         <span class="icon">🗑️</span>
         Excluir
-    </button>
+    </button> -->
 </div>
 
 <style>
