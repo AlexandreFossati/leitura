@@ -99,23 +99,23 @@ export async function PATCH({ params, request }) {
 }
 
 /** @type {import('./$types').RequestHandler} */
-export async function DELETE({ params }) {
-    try {
-        const { id } = params;
+// export async function DELETE({ params }) {
+//     try {
+//         const { id } = params;
 
-        // Validação do ID
-        const bookId = parseInt(id);
-        if (isNaN(bookId) || bookId <= 0) {
-            return json({ error: 'ID do livro inválido' }, { status: 400 });
-        }
+//         // Validação do ID
+//         const bookId = parseInt(id);
+//         if (isNaN(bookId) || bookId <= 0) {
+//             return json({ error: 'ID do livro inválido' }, { status: 400 });
+//         }
 
-        await deleteBook(bookId);
-        return new Response(null, { status: 204 });
-    } catch (error) {
-        console.error('Erro ao processar requisição:', error);
-        return json(
-            { error: 'Erro ao excluir livro' },
-            { status: 500 }
-        );
-    }
-} 
+//         await deleteBook(bookId);
+//         return new Response(null, { status: 204 });
+//     } catch (error) {
+//         console.error('Erro ao processar requisição:', error);
+//         return json(
+//             { error: 'Erro ao excluir livro' },
+//             { status: 500 }
+//         );
+//     }
+// } 
