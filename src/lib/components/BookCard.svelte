@@ -2,12 +2,11 @@
     import { BOOK_STATUS } from '$lib/constants/bookStatus';
     import StarRating from './StarRating.svelte';
     import BookActions from './BookActions.svelte';
-    import ConfirmDialog from './ConfirmDialog.svelte';
     import RatingDialog from './RatingDialog.svelte';
     import { activeMenu } from '$lib/stores/menuStore';
     import { fade } from 'svelte/transition';
     import { createEventDispatcher } from 'svelte';
-    import { handleMoveToReading, handleMoveToRead, handleUpdateRating } from '$lib/actions/bookCardActions';
+    import { handleMoveToReading, handleMoveToRead, handleMoveToUnread, handleUpdateRating } from '$lib/actions/bookCardActions';
 
     /** @type {import('$lib/types').Book} */
     export let book;
@@ -21,7 +20,6 @@
     let actionsPosition = { x: 0, y: 0 };
     let isLoading = false;
     let error = null;
-    let showConfirmDialog = false;
     let showRatingDialog = false;
 
     // Subscreve ao store para saber se este card tem o menu ativo
@@ -30,7 +28,7 @@
     function handleClick(event) {
         if (isLoading) return;
 
-        if (isUnread) {
+        if (isUnread || isReading) {
             if (showActions) {
                 // Se o menu já está aberto neste card, fecha
                 activeMenu.set(null);
@@ -42,8 +40,6 @@
                 };
                 activeMenu.set(book.id);
             }
-        } else if (isReading) {
-            showConfirmDialog = true;
         } else if (isRead) {
             showRatingDialog = true;
         }
@@ -56,16 +52,27 @@
             book.status = BOOK_STATUS.READING;
         }
         isLoading = false;
+        activeMenu.set(null);
     }
 
     async function handleMoveToReadClick() {
         isLoading = true;
-        showConfirmDialog = false;
         const result = await handleMoveToRead(book, dispatch);
         if (result.success) {
             book.status = BOOK_STATUS.READ;
         }
         isLoading = false;
+        activeMenu.set(null);
+    }
+
+    async function handleMoveToUnreadClick() {
+        isLoading = true;
+        const result = await handleMoveToUnread(book, dispatch);
+        if (result.success) {
+            book.status = BOOK_STATUS.UNREAD;
+        }
+        isLoading = false;
+        activeMenu.set(null);
     }
 
     async function handleRatingConfirm(event) {
@@ -77,10 +84,6 @@
             book.rating = newRating;
         }
         isLoading = false;
-    }
-
-    function handleConfirmDialogClose() {
-        showConfirmDialog = false;
     }
 
     function handleRatingDialogClose() {
@@ -117,21 +120,9 @@
     <BookActions
         {book}
         position={actionsPosition}
-        on:edit={() => activeMenu.set(null)}
-        on:delete={() => activeMenu.set(null)}
         on:moveToReading={handleMoveToReadingClick}
-    />
-{/if}
-
-{#if showConfirmDialog}
-    <ConfirmDialog
-        show={true}
-        title="Finalizar Livro"
-        message="Deseja marcar este livro como lido?"
-        confirmText="Concluir leitura"
-        cancelText="Cancelar"
-        on:confirm={handleMoveToReadClick}
-        on:cancel={handleConfirmDialogClose}
+        on:moveToRead={handleMoveToReadClick}
+        on:moveToUnread={handleMoveToUnreadClick}
     />
 {/if}
 

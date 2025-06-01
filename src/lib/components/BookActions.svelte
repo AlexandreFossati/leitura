@@ -2,6 +2,7 @@
     import { createEventDispatcher } from 'svelte';
     import { fade } from 'svelte/transition';
     import { onMount } from 'svelte';
+    import { BOOK_STATUS } from '$lib/constants/bookStatus';
 
     /** @type {import('$lib/types').Book} */
     export let book;
@@ -11,6 +12,9 @@
     const dispatch = createEventDispatcher();
     let menuElement;
     let adjustedPosition = { x: position.x, y: position.y };
+
+    $: isUnread = book.status === BOOK_STATUS.UNREAD;
+    $: isReading = book.status === BOOK_STATUS.READING;
 
     onMount(() => {
         // Ajusta a posição do menu para garantir que ele fique visível
@@ -52,6 +56,14 @@
     function handleMoveToReading() {
         dispatch('moveToReading', book);
     }
+
+    function handleMoveToRead() {
+        dispatch('moveToRead', book);
+    }
+
+    function handleMoveToUnread() {
+        dispatch('moveToUnread', book);
+    }
 </script>
 
 <div 
@@ -60,14 +72,21 @@
     style="left: {adjustedPosition.x}px; top: {adjustedPosition.y}px;"
     transition:fade={{ duration: 150 }}
 >
-    <!-- <button class="action-button" on:click={handleEdit}>
-        <span class="icon">✏️</span>
-        Editar
-    </button> -->
-    <button class="action-button" on:click={handleMoveToReading}>
-        <span class="icon">📖</span>
-        Mover para "Lendo"
-    </button>
+    {#if isUnread}
+        <button class="action-button" on:click={handleMoveToReading}>
+            <span class="icon">📖</span>
+            Mover para "Lendo"
+        </button>
+    {:else if isReading}
+        <button class="action-button" on:click={handleMoveToRead}>
+            <span class="icon">✅</span>
+            Mover para "Lidos"
+        </button>
+        <button class="action-button" on:click={handleMoveToUnread}>
+            <span class="icon">↩️</span>
+            Mover para "Não lidos"
+        </button>
+    {/if}
     <!-- <button class="action-button delete" on:click={handleDelete}>
         <span class="icon">🗑️</span>
         Excluir
