@@ -2,7 +2,7 @@
 
 A web application to track and manage your reading journey. Available at [leitura.app](https://leitura.app).
 
-This project was entirely developed using [Cursor](https://cursor.sh), leveraging AI assistance throughout the development process. Every line of code was carefully crafted with proper software engineering practices, not just experimental AI-generated code.
+This project was entirely developed using [Cursor](https://cursor.sh), leveraging AI assistance throughout the development process.
 
 ## Tech Stack
 - SvelteKit 5.0
