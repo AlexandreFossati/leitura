@@ -1,8 +1,9 @@
 <script>
+    export let title;
 </script>
 
 <header>
-    <h1>Besties Sellers</h1>
+    <h1>{title}</h1>
 </header>
 
 <style>
