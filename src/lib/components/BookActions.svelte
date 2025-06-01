@@ -46,14 +46,6 @@
         }
     });
 
-    // function handleEdit() {
-    //     dispatch('edit', book);
-    // }
-
-    // function handleDelete() {
-    //     dispatch('delete', book);
-    // }
-
     function handleMoveToReading() {
         dispatch('moveToReading', book);
     }
@@ -101,10 +93,6 @@
             Voltar para "Lendo"
         </button>
     {/if}
-    <!-- <button class="action-button delete" on:click={handleDelete}>
-        <span class="icon">🗑️</span>
-        Excluir
-    </button> -->
 </div>
 
 <style>
@@ -138,14 +126,6 @@
 
     .action-button:hover {
         background-color: #f5f5f5;
-    }
-
-    .action-button.delete {
-        color: #dc3545;
-    }
-
-    .action-button.delete:hover {
-        background-color: #fff5f5;
     }
 
     .icon {
