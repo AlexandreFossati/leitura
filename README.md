@@ -1,38 +1,64 @@
-# sv
+# Leitura
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A web application to track and manage your reading journey. Available at [leitura.app](https://leitura.app).
 
-## Creating a project
+This project was entirely developed using [Cursor](https://cursor.sh), leveraging AI assistance throughout the development process. Every line of code was carefully crafted with proper software engineering practices, not just experimental AI-generated code.
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Tech Stack
+- SvelteKit 5.0
+- PostgreSQL
+- Node.js
 
-```bash
-# create a new project in the current directory
-npx sv create
+---
 
-# create a new project in my-app
-npx sv create my-app
-```
+# Technical Context for AI Assistance
 
-## Developing
+This section provides detailed context for AI tools to better understand and assist with the project.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Application Architecture
 
-```bash
-npm run dev
+### Frontend (SvelteKit)
+- Using Svelte 5 with runes for state management
+- Server-side rendering (SSR) enabled
+- Progressive enhancement approach
+- No additional UI libraries - pure CSS for styling
+- Mobile-first responsive design
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+### Backend (Node.js)
+- SvelteKit endpoints for API routes
+- PostgreSQL for data persistence
+- Direct SQL queries (no ORM)
 
-## Building
+### Database Schema
+- Books table: Stores book metadata
 
-To create a production version of your app:
+## Key Features
+- Book tracking (read, want to read, currently reading)
+- Reading progress tracking
+- Book reviews ratings
 
-```bash
-npm run build
-```
+## Development Patterns
+- Feature-based directory structure
+- Server-side form validation
+- Progressive enhancement
+- Error boundaries implementation
+- Type safety with JSDoc comments
 
-You can preview the production build with `npm run preview`.
+## Important Conventions
+- Route structure follows SvelteKit conventions
+- Components are in PascalCase
+- Utilities are in camelCase
+- Database queries are in separate files
+- Error handling is consistent across the application
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+## Common Development Tasks
+- Frontend state management uses Svelte's built-in stores
+- API endpoints follow REST conventions
+- Error handling includes both client and server-side validation
+
+## Deployment
+- Hosted on a Node.js server
+- PostgreSQL database on managed service
+- HTTPS enabled
+
+This technical context helps AI tools understand the project's structure, patterns, and conventions, enabling more accurate and contextual assistance.
