@@ -28,7 +28,7 @@
     function handleClick(event) {
         if (isLoading) return;
 
-        if (isUnread || isReading) {
+        if (isUnread || isReading || isRead) {
             if (showActions) {
                 // Se o menu já está aberto neste card, fecha
                 activeMenu.set(null);
@@ -40,8 +40,6 @@
                 };
                 activeMenu.set(book.id);
             }
-        } else if (isRead) {
-            showRatingDialog = true;
         }
     }
 
@@ -72,6 +70,11 @@
             book.status = BOOK_STATUS.UNREAD;
         }
         isLoading = false;
+        activeMenu.set(null);
+    }
+
+    function handleRateClick() {
+        showRatingDialog = true;
         activeMenu.set(null);
     }
 
@@ -123,6 +126,7 @@
         on:moveToReading={handleMoveToReadingClick}
         on:moveToRead={handleMoveToReadClick}
         on:moveToUnread={handleMoveToUnreadClick}
+        on:rate={handleRateClick}
     />
 {/if}
 

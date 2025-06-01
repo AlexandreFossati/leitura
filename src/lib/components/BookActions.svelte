@@ -15,6 +15,7 @@
 
     $: isUnread = book.status === BOOK_STATUS.UNREAD;
     $: isReading = book.status === BOOK_STATUS.READING;
+    $: isRead = book.status === BOOK_STATUS.READ;
 
     onMount(() => {
         // Ajusta a posição do menu para garantir que ele fique visível
@@ -64,6 +65,10 @@
     function handleMoveToUnread() {
         dispatch('moveToUnread', book);
     }
+
+    function handleRate() {
+        dispatch('rate', book);
+    }
 </script>
 
 <div 
@@ -79,12 +84,21 @@
         </button>
     {:else if isReading}
         <button class="action-button" on:click={handleMoveToRead}>
-            <span class="icon">✅</span>
+            <span class="icon">📖</span>
             Mover para "Lidos"
         </button>
         <button class="action-button" on:click={handleMoveToUnread}>
             <span class="icon">↩️</span>
-            Mover para "Não lidos"
+            Voltar para "Não lidos"
+        </button>
+    {:else if isRead}
+        <button class="action-button" on:click={handleRate}>
+            <span class="icon">⭐</span>
+            Avaliar
+        </button>
+        <button class="action-button" on:click={handleMoveToReading}>
+            <span class="icon">↩️</span>
+            Voltar para "Lendo"
         </button>
     {/if}
     <!-- <button class="action-button delete" on:click={handleDelete}>
