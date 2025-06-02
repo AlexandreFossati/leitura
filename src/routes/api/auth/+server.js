@@ -1,19 +1,27 @@
 import { json } from '@sveltejs/kit';
 import { getUserByKey } from '$lib/server/db/auth.js';
+import { isEndpointLocked, registerAuthFailure } from '$lib/server/security/authLock.js';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
     try {
+        // Verifica se o endpoint está bloqueado
+        if (isEndpointLocked()) {
+            return json({ error: 'Chave de acesso inválida' }, { status: 401 });
+        }
+
         const { key } = await request.json();
 
         // Validação básica
         if (!key || typeof key !== 'string') {
+            registerAuthFailure();
             return json({ error: 'Chave de acesso inválida' }, { status: 401 });
         }
 
         // Validação do formato (apenas letras e números)
         const keyRegex = /^[a-zA-Z0-9]+$/;
         if (!keyRegex.test(key)) {
+            registerAuthFailure();
             return json({ error: 'Chave de acesso inválida' }, { status: 401 });
         }
 
@@ -21,6 +29,7 @@ export async function POST({ request }) {
         const user = await getUserByKey(key);
 
         if (!user) {
+            registerAuthFailure();
             return json({ error: 'Chave de acesso inválida' }, { status: 401 });
         }
 
