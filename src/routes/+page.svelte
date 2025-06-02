@@ -1,6 +1,40 @@
 <script>
     import Header from '$lib/components/Header.svelte';
+    import { goto } from '$app/navigation';
+    
     let accessKey = '';
+    let isLoading = false;
+    let error = null;
+
+    async function handleSubmit() {
+        if (!accessKey.trim()) return;
+
+        isLoading = true;
+        error = null;
+
+        try {
+            const response = await fetch('/api/auth', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ key: accessKey })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro ao validar chave de acesso');
+            }
+
+            // Redireciona para a página principal
+            goto('/mybooks');
+        } catch (err) {
+            error = err.message;
+        } finally {
+            isLoading = false;
+        }
+    }
 </script>
 
 <Header title="Leitura" />
@@ -12,17 +46,30 @@
             Acompanhe sua jornada literária de forma simples e elegante
         </p>
         
-        <div class="input-group">
+        <form class="input-group" on:submit|preventDefault={handleSubmit}>
             <input
                 type="text"
                 bind:value={accessKey}
                 placeholder="Digite sua chave de acesso"
                 class="access-key-input"
+                disabled={isLoading}
             />
-            <button class="access-button">
-                Acessar
+            <button 
+                class="access-button" 
+                type="submit"
+                disabled={isLoading}
+            >
+                {#if isLoading}
+                    <div class="loading-spinner"></div>
+                {:else}
+                    Acessar
+                {/if}
             </button>
-        </div>
+
+            {#if error}
+                <p class="error-message">{error}</p>
+            {/if}
+        </form>
 
         <p class="help-text">
             Para acessar o Leitura, você precisa de uma chave de acesso.
@@ -92,6 +139,11 @@
         border-color: #666;
     }
 
+    .access-key-input:disabled {
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+    }
+
     .access-button {
         padding: 0.75rem 1rem;
         background-color: #333;
@@ -101,16 +153,45 @@
         font-size: 1rem;
         cursor: pointer;
         transition: background-color 0.2s ease;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 2.75rem;
     }
 
-    .access-button:hover {
+    .access-button:hover:not(:disabled) {
         background-color: #444;
+    }
+
+    .access-button:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
     }
 
     .help-text {
         color: #888;
         font-size: 0.875rem;
         margin: 0;
+    }
+
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin: 0;
+    }
+
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #ffffff;
+        border-top: 2px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 
     @media (max-width: 480px) {
