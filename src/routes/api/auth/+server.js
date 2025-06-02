@@ -1,9 +1,10 @@
 import { json } from '@sveltejs/kit';
 import { getUserByKey } from '$lib/server/db/auth.js';
 import { isEndpointLocked, registerAuthFailure } from '$lib/server/security/authLock.js';
+import { AUTH_COOKIE, COOKIE_MAX_AGE } from '$lib/constants/auth.js';
 
 /** @type {import('./$types').RequestHandler} */
-export async function POST({ request }) {
+export async function POST({ request, cookies }) {
     try {
         // Verifica se o endpoint está bloqueado
         if (isEndpointLocked()) {
@@ -32,6 +33,15 @@ export async function POST({ request }) {
             registerAuthFailure();
             return json({ error: 'Chave de acesso inválida' }, { status: 401 });
         }
+
+        // Define o cookie de autenticação
+        cookies.set(AUTH_COOKIE, user.key, {
+            path: '/',
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: COOKIE_MAX_AGE
+        });
 
         // Retorna os dados do usuário
         return json({ user: user.user });
